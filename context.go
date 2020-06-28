@@ -2,6 +2,7 @@ package gourd
 
 import (
 	"net/http"
+	"encoding/json"
 )
 
 type ParamMap map[string]string
@@ -43,4 +44,13 @@ func (context *Context) Query(key string) string {
 
 func (context *Context) Redirect(code int,path string){
 	http.Redirect(context.writer,context.req, path, code)
+}
+
+func (context *Context) WriteJson(data interface{}){
+	context.writer.Header().Set("Content-Type","application/json")
+	if jsonData,err := json.Marshal(data);err == nil{
+		context.writer.Write(jsonData)
+	} else {
+		// 错误处理
+	}
 }
