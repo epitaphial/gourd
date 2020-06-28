@@ -3,6 +3,7 @@ package gourd
 import (
 	"net/http"
 	"encoding/json"
+	"html/template"
 )
 
 type ParamMap map[string]string
@@ -12,6 +13,7 @@ type Context struct {
 	req    *http.Request
 	Method string
 	Param ParamMap
+	Data map[string]interface{}
 }
 
 // 初始化上下文的操作，包括请求响应、方法
@@ -21,6 +23,7 @@ func NewContext(w http.ResponseWriter, r *http.Request) *Context {
 		req:    r,
 		Method: r.Method,
 		Param: make(ParamMap),
+		Data: make(map[string]interface{}),
 	}
 }
 
@@ -53,4 +56,9 @@ func (context *Context) WriteJson(data interface{}){
 	} else {
 		// 错误处理
 	}
+}
+
+func (context *Context) RenderHTML(htmlPath string) {
+	t := template.Must(template.ParseFiles(htmlPath))
+	t.Execute(context.writer,context.Data)
 }
