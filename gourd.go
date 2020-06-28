@@ -29,15 +29,30 @@ func (engine *gourdEngine) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if ifFind {
 		// 监听方法
 		handlerInterface.setContext(context)
+		handlerInterface.Prepare()
 		switch context.Method {
 		case "GET":
 			handlerInterface.Get()
 		case "POST":
 			handlerInterface.Post()
+		case "HEAD":
+			handlerInterface.Head()
+		case "PUT":
+			handlerInterface.Put()
+		case "DELETE":
+			handlerInterface.Delete()
+		case "CONNECT":
+			handlerInterface.Connect()
+		case "OPTIONS":
+			handlerInterface.Options()
+		case "TRACE":
+			handlerInterface.Trace()
+		case "PATCH":
+			handlerInterface.Patch()
 		}
 	} else {
 		context.SetStatus(http.StatusNotFound)
-		context.WriteString("404notfound")
+		context.WriteString("<h1>404 Not Found</h1><br><h2>powered by gourd</h2>")
 	}
 }
 

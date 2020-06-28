@@ -36,3 +36,7 @@ func (context *Context) WriteString(text string) {
 func (context *Context) SetStatus(code int) {
 	context.writer.WriteHeader(code)
 }
+
+func (context *Context) Query(key string) string {
+	return context.req.Form.Get(key)
+}
