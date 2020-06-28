@@ -122,16 +122,19 @@ func addNode(rn *routerNode,subPaths []string, hi HandlerInterface)(err error){
 }
 
 // 在router中查找handlerInterface
-func (r *routerGroup) findRouter(path string) (HandlerInterface,bool) {
+func (r *routerGroup) findRouter(path string) (hi HandlerInterface,ifFind bool,params ParamMap) {
+	params = make(map[string]string)
 	rn := r.rootNode
 	subPaths := dividePath(path)
-	return findNode(rn,subPaths)
+	hi,ifFind = findNode(rn,subPaths,&params)
+	return
 }
 
 // 递归函数，在trie树中查找节点
-func findNode(rn *routerNode,subPaths []string) (hi HandlerInterface,ifFind bool){
+func findNode(rn *routerNode,subPaths []string,params *ParamMap) (hi HandlerInterface,ifFind bool){
 	sp := subPaths[0]
 	hi = nil
+	ifFind = false
 	// 查找分以下几种种情况
 	// 1.查找到静态节点
 	// 1.1.该节点为终点且subPaths长度为1到达结尾，此时返回节点。
@@ -148,7 +151,7 @@ func findNode(rn *routerNode,subPaths []string) (hi HandlerInterface,ifFind bool
 		} else {
 			if !node.ifEndPath{
 				// 情况1.4
-				hi,ifFind = findNode(node,subPaths[1:])
+				hi,ifFind = findNode(node,subPaths[1:],params)
 			}
 		}
 	}
@@ -166,11 +169,13 @@ func findNode(rn *routerNode,subPaths []string) (hi HandlerInterface,ifFind bool
 					if len(subPaths) == 1{
 						// 情况2.1
 						hi,ifFind = node.handlerInterface,true
+						(*params)[key[2:]] = sp[1:]
 					}
 				} else {
 					if len(subPaths) != 1{
 						// 情况2.4
-						hi,ifFind = findNode(node,subPaths[1:])
+						hi,ifFind = findNode(node,subPaths[1:],params)
+						(*params)[key[2:]] = sp[1:]
 					}
 				}
 			}

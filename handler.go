@@ -5,6 +5,13 @@ type HandlerInterface interface {
 	Prepare()
 	Get()
 	Post()
+	Head()
+	Put()
+	Delete()
+	Connect()
+	Options()
+	Trace()
+	Patch()
 	setContext(ctx *Context)
 }
 
@@ -26,4 +33,25 @@ func (handler *Handler) Get() {
 }
 
 func (handler *Handler) Post() {
+}
+
+func (handler *Handler) Head() {
+}
+
+func (handler *Handler) Put() {
+}
+
+func (handler *Handler) Delete() {
+}
+
+func (handler *Handler) Connect() {
+}
+
+func (handler *Handler) Options() {
+}
+
+func (handler *Handler) Trace() {
+}
+
+func (handler *Handler) Patch() {
 }

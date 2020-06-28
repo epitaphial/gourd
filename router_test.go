@@ -21,22 +21,22 @@ func Test_dividePath(t *testing.T) {
 func Test_Router(t *testing.T) {
 	ifFind := false
 	rt := newRouterGroup()
-	_,ifFind = rt.findRouter("/")
+	_,ifFind,_ = rt.findRouter("/")
 	if ifFind != false {
 		t.Errorf("Expect find none but get sth")
 	}
 	rt.addRouter("/", nil)
-	_,ifFind = rt.findRouter("/")
+	_,ifFind,_ = rt.findRouter("/")
 	if ifFind != true {
 		t.Errorf("Expect find / but get nothing")
 	}
-	_,ifFind = rt.findRouter("/admin/curled")
+	_,ifFind,_ = rt.findRouter("/admin/curled")
 	if ifFind != false {
 		t.Errorf("Expect find none but get sth")
 	}
 	// 动态路由测试
 	rt.addRouter("/admin/:user", nil)
-	_,ifFind = rt.findRouter("/admin/curled")
+	_,ifFind,_ = rt.findRouter("/admin/curled")
 	if ifFind != true {
 		t.Errorf("Expect find /admin.curled but get nothing")
 	}

@@ -1,7 +1,6 @@
 package gourd
 
 import (
-	"fmt"
 	"net/http"
 )
 
@@ -22,9 +21,13 @@ func Gourd() *gourdEngine {
 // the function ListenAndServe receive a interface handler,
 // all types have the ServeHTTP function can implement the interface
 func (engine *gourdEngine) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	handlerInterface, ok := engine.rg.findRouter(r.URL.Path)
-	if ok {
-		context := NewContext(w, r)
+	// 通过路径查找到路由
+	handlerInterface, ifFind ,params := engine.rg.findRouter(r.URL.Path)
+	// 设置上下文、动态路由参数
+	context := NewContext(w, r)
+	context.setParam(params)
+	if ifFind {
+		// 监听方法
 		handlerInterface.setContext(context)
 		switch context.Method {
 		case "GET":
@@ -33,8 +36,8 @@ func (engine *gourdEngine) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			handlerInterface.Post()
 		}
 	} else {
-		w.WriteHeader(http.StatusNotFound)
-		fmt.Fprintf(w, "404notfound")
+		context.SetStatus(http.StatusNotFound)
+		context.WriteString("404notfound")
 	}
 }
 
@@ -48,6 +51,6 @@ func (engine *gourdEngine) Route(path string, handlerInterface HandlerInterface)
 	rg := engine.rg
 	err := rg.addRouter(path, handlerInterface)
 	if err != nil{
-		fmt.Println(err)
+		// fmt.Println(err)
 	}
 }
