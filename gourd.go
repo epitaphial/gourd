@@ -66,6 +66,6 @@ func (engine *gourdEngine) Route(path string, handlerInterface HandlerInterface)
 	rg := engine.rg
 	err := rg.addRouter(path, handlerInterface)
 	if err != nil{
-		// fmt.Println(err)
+		panic(err)
 	}
 }

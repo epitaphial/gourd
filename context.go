@@ -40,3 +40,7 @@ func (context *Context) SetStatus(code int) {
 func (context *Context) Query(key string) string {
 	return context.req.Form.Get(key)
 }
+
+func (context *Context) Redirect(code int,path string){
+	http.Redirect(context.writer,context.req, path, code)
+}
