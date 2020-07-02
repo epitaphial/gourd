@@ -31,46 +31,37 @@ func (handler *Handler) Prepare() {
 }
 
 func (handler *Handler) Get() {
-	handler.Ctx.SetStatus(405)
-	handler.Ctx.WriteString("<h1>405 Method Not Allowed</h1><br><h2>powered by gourd</h2>")
+	handler.Ctx.WriteString(405,"<h1>405 Method Not Allowed</h1><br><h2>powered by gourd</h2>")
 }
 
 func (handler *Handler) Post() {
-	handler.Ctx.SetStatus(405)
-	handler.Ctx.WriteString("<h1>405 Method Not Allowed</h1><br><h2>powered by gourd</h2>")
+	handler.Ctx.WriteString(405,"<h1>405 Method Not Allowed</h1><br><h2>powered by gourd</h2>")
 }
 
 func (handler *Handler) Head() {
-	handler.Ctx.SetStatus(405)
-	handler.Ctx.WriteString("<h1>405 Method Not Allowed</h1><br><h2>powered by gourd</h2>")
+	handler.Ctx.WriteString(405,"<h1>405 Method Not Allowed</h1><br><h2>powered by gourd</h2>")
 }
 
 func (handler *Handler) Put() {
-	handler.Ctx.SetStatus(405)
-	handler.Ctx.WriteString("<h1>405 Method Not Allowed</h1><br><h2>powered by gourd</h2>")
+	handler.Ctx.WriteString(405,"<h1>405 Method Not Allowed</h1><br><h2>powered by gourd</h2>")
 }
 
 func (handler *Handler) Delete() {
-	handler.Ctx.SetStatus(405)
-	handler.Ctx.WriteString("<h1>405 Method Not Allowed</h1><br><h2>powered by gourd</h2>")
+	handler.Ctx.WriteString(405,"<h1>405 Method Not Allowed</h1><br><h2>powered by gourd</h2>")
 }
 
 func (handler *Handler) Connect() {
-	handler.Ctx.SetStatus(405)
-	handler.Ctx.WriteString("<h1>405 Method Not Allowed</h1><br><h2>powered by gourd</h2>")
+	handler.Ctx.WriteString(405,"<h1>405 Method Not Allowed</h1><br><h2>powered by gourd</h2>")
 }
 
 func (handler *Handler) Options() {
-	handler.Ctx.SetStatus(405)
-	handler.Ctx.WriteString("<h1>405 Method Not Allowed</h1><br><h2>powered by gourd</h2>")
+	handler.Ctx.WriteString(405,"<h1>405 Method Not Allowed</h1><br><h2>powered by gourd</h2>")
 }
 
 func (handler *Handler) Trace() {
-	handler.Ctx.SetStatus(405)
-	handler.Ctx.WriteString("<h1>405 Method Not Allowed</h1><br><h2>powered by gourd</h2>")
+	handler.Ctx.WriteString(405,"<h1>405 Method Not Allowed</h1><br><h2>powered by gourd</h2>")
 }
 
 func (handler *Handler) Patch() {
-	handler.Ctx.SetStatus(405)
-	handler.Ctx.WriteString("<h1>405 Method Not Allowed</h1><br><h2>powered by gourd</h2>")
+	handler.Ctx.WriteString(405,"<h1>405 Method Not Allowed</h1><br><h2>powered by gourd</h2>")
 }

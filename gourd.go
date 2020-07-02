@@ -30,6 +30,7 @@ func (engine *gourdEngine) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		// 监听方法
 		handlerInterface.setContext(context)
 		handlerInterface.Prepare()
+		//fmt.Printf("METHOD-%s-PATH-%s\n",context.Method,r.URL.Path)
 		switch context.Method {
 		case "GET":
 			handlerInterface.Get()
@@ -51,8 +52,7 @@ func (engine *gourdEngine) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			handlerInterface.Patch()
 		}
 	} else {
-		context.SetStatus(http.StatusNotFound)
-		context.WriteString("<h1>404 Not Found</h1><br><h2>powered by gourd</h2>")
+		//context.WriteString(http.StatusNotFound,"<h1>404 Not Found</h1><br><h2>powered by gourd</h2>")
 	}
 }
 
