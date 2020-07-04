@@ -14,10 +14,4 @@ func Test_Group(t *testing.T) {
 	if grp2.prefix != "/v1/v3" {
 		t.Errorf("Expect prefix %s but get %s\n", "/v1/v3", grp2.prefix)
 	}
-	_,err := grp.Group("/v3")
-	if err != nil {
-		t.Log(err)
-	} else {
-		t.Errorf("Expect error but get nil!\n")
-	}
 }

@@ -3,6 +3,7 @@ package gourd
 import (
 	"strings"
 	"errors"
+	"net/http"
 )
 
 // 如果路径为/admin/<name>/info,该节点保存的信息包括斜杠开始的路径名
@@ -192,4 +193,21 @@ func dividePath(path string) []string {
 		subPath = append(subPath, "/"+p)
 	}
 	return subPath
+}
+
+func (rm *routerManager) handle(context *Context) {
+	// 通过路径查找到路由
+	handlerInterface, ifFind ,params := rm.findRouter(context.req.URL.Path)
+	if ifFind {
+		context.setParam(params)
+		handlerInterface.setContext(context)
+		context.hi = handlerInterface
+		handlerInterface.Prepare()
+		context.handlerfuncs = append(context.handlerfuncs, nil)
+	} else {
+		context.handlerfuncs = append(context.handlerfuncs, func(c *Context) {
+			context.WriteString(http.StatusNotFound,"404 Not Found")
+		})
+	}
+	context.Next()
 }

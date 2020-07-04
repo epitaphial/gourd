@@ -2,6 +2,7 @@ package gourd
 
 import (
 	"net/http"
+	"strings"
 )
 
 // gourdEngine是整个框架的主引擎，实现了ServeHTTP方法，替换http包原有的DefaultMux
@@ -26,44 +27,22 @@ func Gourd() *gourdEngine {
 // the function ListenAndServe receive a interface handler,
 // all types have the ServeHTTP function can implement the interface
 func (engine *gourdEngine) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	// 通过路径查找到路由
-	handlerInterface, ifFind ,params := engine.rm.findRouter(r.URL.Path)
 	// 设置上下文、动态路由参数
 	context := NewContext(w, r)
-	context.setParam(params)
-	if ifFind {
-		// 监听方法
-		handlerInterface.setContext(context)
-		handlerInterface.Prepare()
-		//fmt.Printf("METHOD-%s-PATH-%s\n",context.Method,r.URL.Path)
-		switch context.Method {
-		case "GET":
-			handlerInterface.Get()
-		case "POST":
-			handlerInterface.Post()
-		case "HEAD":
-			handlerInterface.Head()
-		case "PUT":
-			handlerInterface.Put()
-		case "DELETE":
-			handlerInterface.Delete()
-		case "CONNECT":
-			handlerInterface.Connect()
-		case "OPTIONS":
-			handlerInterface.Options()
-		case "TRACE":
-			handlerInterface.Trace()
-		case "PATCH":
-			handlerInterface.Patch()
+	for _,group := range engine.groups{
+		if strings.HasPrefix(r.URL.Path, group.prefix) {
+			context.handlerfuncs = append(context.handlerfuncs,group.middlewares...)
 		}
-	} else {
-		context.WriteString(http.StatusNotFound,"404 Not Found")
 	}
+	engine.rm.handle(context)
 }
 
 // Run方法通过调用http包的ListenAndServe方法，启动服务器
-func (engine *gourdEngine) Run() {
-	http.ListenAndServe(":8080", engine)
+func (engine *gourdEngine) Run(port string) {
+	err := http.ListenAndServe(port, engine)
+	if err != nil{
+		panic(err)
+	}
 }
 
 // Route方法向路径注册相应的方法

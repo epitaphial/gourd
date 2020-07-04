@@ -15,8 +15,12 @@ type Context struct {
 	req    *http.Request
 	Method string
 	Param ParamMap
+	Path string
 	data map[string]interface{}
 	mutex sync.RWMutex
+	index int
+	handlerfuncs []HandlerFunc // 中间件函数
+	hi HandlerInterface
 }
 
 // 初始化上下文的操作，包括请求响应、方法
@@ -26,7 +30,9 @@ func NewContext(w http.ResponseWriter, r *http.Request) *Context {
 		req:    r,
 		Method: r.Method,
 		Param: make(ParamMap),
+		Path: r.URL.Path,
 		data: make(map[string]interface{}),
+		index: -1,
 	}
 }
 
@@ -98,4 +104,37 @@ func (context *Context) AddData(key string,dataIt interface{}) {
 func (context *Context) RenderHTML(htmlPath string) {
 	t := template.Must(template.ParseFiles(htmlPath))
 	t.Execute(context.writer,context.data)
+}
+
+// 在中间件中使用
+func (context *Context) Next() {
+	context.index ++
+	for ;context.index < len(context.handlerfuncs) ;context.index ++ {
+		if context.handlerfuncs[context.index] == nil{
+			handlerInterface := context.hi
+			// 监听方法
+			switch context.Method {
+			case "GET":
+				handlerInterface.Get()
+			case "POST":
+				handlerInterface.Post()
+			case "HEAD":
+				handlerInterface.Head()
+			case "PUT":
+				handlerInterface.Put()
+			case "DELETE":
+				handlerInterface.Delete()
+			case "CONNECT":
+				handlerInterface.Connect()
+			case "OPTIONS":
+				handlerInterface.Options()
+			case "TRACE":
+				handlerInterface.Trace()
+			case "PATCH":
+				handlerInterface.Patch()
+			}
+		} else {
+			context.handlerfuncs[context.index](context)
+		}
+	}
 }

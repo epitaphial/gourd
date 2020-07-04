@@ -14,7 +14,7 @@ type routerGroup struct{
 func (rg *routerGroup) Group(groupPath string) (*routerGroup,error){
 	for _,group := range rg.engine.groups{
 		if rg.prefix + groupPath == group.prefix {
-			return nil,errors.New("duplicate group!")
+			panic(errors.New("duplicate group!"))
 		}
 	}
 	newg := &routerGroup{
@@ -28,4 +28,8 @@ func (rg *routerGroup) Group(groupPath string) (*routerGroup,error){
 
 func (rg *routerGroup) Route(path string, handlerInterface HandlerInterface){
 	rg.engine.Route(rg.prefix + path, handlerInterface)
+}
+
+func (rg *routerGroup) Use(middlewares ...HandlerFunc) {
+	rg.middlewares = append(rg.middlewares,middlewares...)
 }
