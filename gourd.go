@@ -8,21 +8,26 @@ import (
 // 成员上，包含路由列表
 // 方法上，包含构造方法Gourd、注册路由方法Route，启动引擎方法Run
 type gourdEngine struct {
-	rg *routerGroup
+	*routerGroup // engine作为顶层的group
+	rm *routerManager // 所有的router
+	groups []*routerGroup // engine管理的所有的group
 }
 
 // Gourd方法是框架引擎的构造方法，返回引擎的指针
 func Gourd() *gourdEngine {
-	return &gourdEngine{
-		rg: newRouterGroup(),
+	engine := &gourdEngine{
+		rm: newRouterManager(),
 	}
+	engine.routerGroup = &routerGroup{engine:engine}
+	engine.groups = []*routerGroup{engine.routerGroup}
+	return engine
 }
 
 // the function ListenAndServe receive a interface handler,
 // all types have the ServeHTTP function can implement the interface
 func (engine *gourdEngine) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// 通过路径查找到路由
-	handlerInterface, ifFind ,params := engine.rg.findRouter(r.URL.Path)
+	handlerInterface, ifFind ,params := engine.rm.findRouter(r.URL.Path)
 	// 设置上下文、动态路由参数
 	context := NewContext(w, r)
 	context.setParam(params)
@@ -52,7 +57,7 @@ func (engine *gourdEngine) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			handlerInterface.Patch()
 		}
 	} else {
-		//context.WriteString(http.StatusNotFound,"<h1>404 Not Found</h1><br><h2>powered by gourd</h2>")
+		context.WriteString(http.StatusNotFound,"404 Not Found")
 	}
 }
 
@@ -63,8 +68,7 @@ func (engine *gourdEngine) Run() {
 
 // Route方法向路径注册相应的方法
 func (engine *gourdEngine) Route(path string, handlerInterface HandlerInterface) {
-	rg := engine.rg
-	err := rg.addRouter(path, handlerInterface)
+	err := engine.rm.addRouter(path, handlerInterface)
 	if err != nil{
 		panic(err)
 	}

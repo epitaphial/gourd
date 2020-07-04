@@ -1,5 +1,7 @@
 package gourd
 
+type HandlerFunc func(*Context)
+
 // HandlerInterface是包含了诸多方法的接口
 type HandlerInterface interface {
 	Prepare()
@@ -19,6 +21,12 @@ type HandlerInterface interface {
 // 包括成员Ctx，该成员含有上下文
 type Handler struct {
 	Ctx *Context
+	group string
+}
+
+// 该方法设置handler所属的组
+func (handler *Handler) SetGroup(gp string) {
+	handler.group = gp
 }
 
 // 该方法设置相关的上下文

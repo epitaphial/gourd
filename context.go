@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"html/template"
 	"sync"
+	"fmt"
 )
 
 type ParamMap map[string]string
@@ -59,10 +60,10 @@ func (context *Context) write(str []byte){
 }
 
 // 用于产生plaintext
-func (context *Context) WriteString(code int,text string) {
+func (context *Context) WriteString(code int,formart string,param ...interface{}) {
 	context.SetHeader("Content-Type","text/plain")
 	context.WriteHeader(code)
-	context.write([]byte(text))
+	fmt.Fprintf(context.writer,formart,param...)
 }
 
 func (context *Context) Query(key string) string {

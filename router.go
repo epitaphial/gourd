@@ -16,13 +16,13 @@ type routerNode struct {
 }
 
 // 路由组，包含一个根节点
-type routerGroup struct {
+type routerManager struct {
 	rootNode *routerNode
 }
 
 // 返回一个RouterGroup的组
-func newRouterGroup() *routerGroup {
-	return &routerGroup{
+func newRouterManager() *routerManager {
+	return &routerManager{
 		rootNode: &routerNode{
 			subPath:       "",
 			childrenNodes: make(map[string]*routerNode),
@@ -34,7 +34,7 @@ func newRouterGroup() *routerGroup {
 }
 
 // 添加router
-func (r *routerGroup) addRouter(path string, hi HandlerInterface) error {
+func (r *routerManager) addRouter(path string, hi HandlerInterface) error {
 	rn := r.rootNode
 	subPaths := dividePath(path)
 	return addNode(rn,subPaths,hi)
@@ -122,7 +122,7 @@ func addNode(rn *routerNode,subPaths []string, hi HandlerInterface)(err error){
 }
 
 // 在router中查找handlerInterface
-func (r *routerGroup) findRouter(path string) (hi HandlerInterface,ifFind bool,params ParamMap) {
+func (r *routerManager) findRouter(path string) (hi HandlerInterface,ifFind bool,params ParamMap) {
 	params = make(map[string]string)
 	rn := r.rootNode
 	subPaths := dividePath(path)
