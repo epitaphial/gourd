@@ -21,48 +21,48 @@ func Test_dividePath(t *testing.T) {
 func Test_Router(t *testing.T) {
 	ifFind := false
 	rt := newRouterManager()
-	_,ifFind,_ = rt.findRouter("/")
+	_, ifFind, _ = rt.findRouter("/")
 	if ifFind != false {
 		t.Errorf("Expect find none but get sth\n")
 	}
 	rt.addRouter("/", nil)
-	_,ifFind,_ = rt.findRouter("/")
+	_, ifFind, _ = rt.findRouter("/")
 	if ifFind != true {
 		t.Errorf("Expect find / but get nothing\n")
 	}
-	_,ifFind,_ = rt.findRouter("/admin/curled")
+	_, ifFind, _ = rt.findRouter("/admin/curled")
 	if ifFind != false {
 		t.Errorf("Expect find none but get sth\n")
 	}
 	// 动态路由测试
 	rt.addRouter("/admin/:user", nil)
-	_,ifFind,params := rt.findRouter("/admin/curled")
+	_, ifFind, params := rt.findRouter("/admin/curled")
 	if ifFind != true || params["user"] != "curled" {
-		t.Errorf("Expect find /admin/curled but get %s\n",params["user"])
+		t.Errorf("Expect find /admin/curled but get %s\n", params["user"])
 	} else {
 		t.Log(params["user"])
 	}
 	// 动态路由顺序验证
 	rt.addRouter("/admin/curled/:lover", nil)
-	_,ifFind,params = rt.findRouter("/admin/curled/curled1")
-	if ifFind != true || params["lover"] != "curled1"{
-		t.Errorf("Expect find curled1 but get %s\n",params["lover"])
+	_, ifFind, params = rt.findRouter("/admin/curled/curled1")
+	if ifFind != true || params["lover"] != "curled1" {
+		t.Errorf("Expect find curled1 but get %s\n", params["lover"])
 	} else {
 		t.Log(params["lover"])
 	}
 	// 通配路由测试
 	rt.addRouter("/static/*relapath", nil)
-	_,ifFind,params = rt.findRouter("/static/js/bootstrap.js")
-	if ifFind != true || params["relapath"] != "js/bootstrap.js"{
-		t.Errorf("Expect find /js/bootstrap.js but get %s\n",params["relapath"])
+	_, ifFind, params = rt.findRouter("/static/js/bootstrap.js")
+	if ifFind != true || params["relapath"] != "js/bootstrap.js" {
+		t.Errorf("Expect find /js/bootstrap.js but get %s\n", params["relapath"])
 	} else {
 		t.Log(params["relapath"])
 	}
 	// 通配路由顺序验证
 	rt.addRouter("/static/js/*relapath", nil)
-	_,ifFind,params = rt.findRouter("/static/js/bootstrap.js")
-	if ifFind != true || params["relapath"] != "bootstrap.js"{
-		t.Errorf("Expect find bootstrap.js but get %s\n",params["relapath"])
+	_, ifFind, params = rt.findRouter("/static/js/bootstrap.js")
+	if ifFind != true || params["relapath"] != "bootstrap.js" {
+		t.Errorf("Expect find bootstrap.js but get %s\n", params["relapath"])
 	} else {
 		t.Log(params["relapath"])
 	}

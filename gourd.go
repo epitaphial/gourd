@@ -1,18 +1,18 @@
 package gourd
 
 import (
+	"log"
 	"net/http"
 	"strings"
-	"log"
 )
 
 // gourdEngine是整个框架的主引擎，实现了ServeHTTP方法，替换http包原有的DefaultMux
 // 成员上，包含路由列表
 // 方法上，包含构造方法Gourd、注册路由方法Route，启动引擎方法Run
 type gourdEngine struct {
-	*routerGroup // engine作为顶层的group
-	rm *routerManager // 所有的router
-	groups []*routerGroup // engine管理的所有的group
+	*routerGroup                // engine作为顶层的group
+	rm           *routerManager // 所有的router
+	groups       []*routerGroup // engine管理的所有的group
 }
 
 // Gourd方法是框架引擎的构造方法，返回引擎的指针
@@ -20,7 +20,7 @@ func Gourd() *gourdEngine {
 	engine := &gourdEngine{
 		rm: newRouterManager(),
 	}
-	engine.routerGroup = &routerGroup{engine:engine}
+	engine.routerGroup = &routerGroup{engine: engine}
 	engine.groups = []*routerGroup{engine.routerGroup}
 	// 默认使用recovery中间件
 	engine.Use(Recovery())
@@ -32,9 +32,9 @@ func Gourd() *gourdEngine {
 func (engine *gourdEngine) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// 设置上下文、动态路由参数
 	context := NewContext(w, r)
-	for _,group := range engine.groups{
+	for _, group := range engine.groups {
 		if strings.HasPrefix(r.URL.Path, group.prefix) {
-			context.handlerfuncs = append(context.handlerfuncs,group.middlewares...)
+			context.handlerfuncs = append(context.handlerfuncs, group.middlewares...)
 		}
 	}
 	engine.rm.handle(context)
@@ -44,7 +44,7 @@ func (engine *gourdEngine) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 func (engine *gourdEngine) Run(port string) {
 	log.Printf("Running in port %s\n", port[1:])
 	err := http.ListenAndServe(port, engine)
-	if err != nil{
+	if err != nil {
 		panic(err)
 	}
 }
@@ -53,7 +53,7 @@ func (engine *gourdEngine) Run(port string) {
 func (engine *gourdEngine) Route(path string, handlerInterface HandlerInterface) {
 	handlerInterface.setRestful(false)
 	err := engine.rm.addRouter(path, handlerInterface)
-	if err != nil{
+	if err != nil {
 		panic(err)
 	}
 }
@@ -96,15 +96,15 @@ func (engine *gourdEngine) Patch(path string, hf HandlerFunc) {
 }
 
 func (engine *gourdEngine) routeRest(method string, path string, hf HandlerFunc) {
-	hi,ifFind,_ := engine.rm.findRouter(path)
+	hi, ifFind, _ := engine.rm.findRouter(path)
 	if ifFind {
 		if hi.ifRestHandler() { // 是rest类handler，只需要判断方法层面上有没有重复注册
-			if restHandlers := hi.getRestHandlers();restHandlers != nil{
-				if _ , dep := restHandlers[method] ; dep {
+			if restHandlers := hi.getRestHandlers(); restHandlers != nil {
+				if _, dep := restHandlers[method]; dep {
 					// 如果restful路由方法重复
 					panic("can not register restful route when there is already an unrestful route!")
 				} else {
-					hi.setRestHandler(method,hf)
+					hi.setRestHandler(method, hf)
 				}
 			}
 		} else { // 不是rest类handler，不满足要求，从而也不允许注册
@@ -113,13 +113,13 @@ func (engine *gourdEngine) routeRest(method string, path string, hf HandlerFunc)
 	} else {
 		hd := Handler{
 			handlerFuncs: make(map[string]HandlerFunc),
-			restful: true,
+			restful:      true,
 		}
 		hd.handlerFuncs[method] = hf
 		var hi HandlerInterface
 		hi = &hd
 		err := engine.rm.addRouter(path, hi)
-		if err != nil{
+		if err != nil {
 			panic(err)
 		}
 	}
