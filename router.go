@@ -6,12 +6,14 @@ import (
 	"net/http"
 )
 
-// 如果路径为/admin/<name>/info,该节点保存的信息包括斜杠开始的路径名
+// 如果路径为/admin/:name/info,该节点保存的信息包括斜杠开始的路径名
 // 子节点、是否是通配符
+// 优先级 静态>动态>通配
 type routerNode struct {
 	subPath       string                 // 当前节点的子路径
 	childrenNodes map[string]*routerNode //当前节点的子节点
-	ifDynamic     bool                   // 是否为动态匹配节点
+	ifDynamic     bool                   // 是否为动态匹配节点（：）
+	ifWildcard		bool				// 是否为通配节点（*）只能用在最末尾
 	ifEndPath     bool                   // 是否该节点是已注册的路由路径的终点
 	handlerInterface HandlerInterface	// 节点相应的处理器接口
 }
@@ -28,6 +30,7 @@ func newRouterManager() *routerManager {
 			subPath:       "",
 			childrenNodes: make(map[string]*routerNode),
 			ifDynamic:     false,
+			ifWildcard:		false,
 			ifEndPath:     false,
 			handlerInterface:nil,
 		},
@@ -46,6 +49,10 @@ func addNode(rn *routerNode,subPaths []string, hi HandlerInterface)(err error){
 	err = nil
 	sp := subPaths[0]
 	ifDynamicNode := strings.Contains(sp, ":")
+	ifWildcardNode := strings.Contains(sp, "*")
+	if ifDynamicNode && sp[1:2] != ":" || ifWildcardNode && sp[1:2] != "*" {
+		return errors.New("format error!")
+	}
 	if node,ok := rn.childrenNodes[sp];ok {
 		// 在map中找到了节点，此时有三种情况：
 		// 1.节点ifEndPath为true且subPath是最后一个
@@ -66,16 +73,18 @@ func addNode(rn *routerNode,subPaths []string, hi HandlerInterface)(err error){
 		// 注意，添加节点时不需要考虑查找时的问题，即：
 		// 静态节点map匹配到，但递归下去却找不到节点，所以要回溯给动态节点
 		// 在添加节点时，静态节点优先级高于动态节点，所以在这里不需要回溯
-		//未找到节点，分以下两种情况：
+		//未找到节点，分以下几种情况：
 		// 1.将注册的是动态节点，有动态节点，并且是EndPath且subPath是最后一个
 		// 此时节点重复
 		// 2.将注册的是静态节点或非1中情况的动态节点，直接添加节点，并继续递归
+		// 3.将注册的是通配节点
 		if ifDynamicNode {
 			// 此时将注册的是动态节点
 			hasDynamicNode := false
 			for key,node := range rn.childrenNodes{
 				// 查找到map已经注册了动态节点的情况
 				if strings.Contains(key, ":"){
+					hasDynamicNode = true
 					if len(subPaths) == 1{
 						if node.ifEndPath {
 							// 情况1，节点重复
@@ -104,8 +113,36 @@ func addNode(rn *routerNode,subPaths []string, hi HandlerInterface)(err error){
 					err = addNode(rn.childrenNodes[sp],subPaths[1:],hi)
 				}
 			}
+		} else if ifWildcardNode {
+			//将注册的是通配节点，此时有以下几种情况
+			// 1.对应的map有通配节点，此时重复
+			// 2.此通配节点对应的subPath不为1，报错
+			// 3.对应的map无通配节点，则注册相应节点
+			if len(subPaths) != 1 {
+				err = errors.New("wildcard should be the last node")
+			} else {
+				// 此时将注册的是通配节点
+				hasWildcardNode := false
+				for key,_ := range rn.childrenNodes{
+					// 查找到map已经注册了通配节点的情况
+					if strings.Contains(key, "*"){
+						err = errors.New("duplicate router!")
+						hasWildcardNode = true
+					}
+				}
+				if !hasWildcardNode {
+					// 如果未找到通配节点，注册通配节点
+					rn.childrenNodes[sp] = &routerNode{
+						subPath:       sp,
+						childrenNodes: make(map[string]*routerNode),
+						ifWildcard:     true,
+						ifEndPath:     true,
+						handlerInterface:hi,
+					}				
+				}
+			}
 		} else {
-			// 未找到动态节点，注册静态节点
+			// 未找到动态、通配节点，注册静态节点
 			rn.childrenNodes[sp] = &routerNode{
 				subPath:       sp,
 				childrenNodes: make(map[string]*routerNode),
@@ -163,6 +200,9 @@ func findNode(rn *routerNode,subPaths []string,params *ParamMap) (hi HandlerInte
 		// 2.2.该动态节点为末节点，subPaths长度不为1，此时未找到节点
 		// 2.3.该动态节点不是末节点，但subPath长度为1，此时未找到节点
 		// 2.4.该动态节点不是末节点，且subPath也不为1，继续递归查找
+	// 或者回溯到通配节点中进行匹配
+	// 此时只有一种情况，查找到通配节点，直接返回节点
+	if !ifFind {
 		for key,node := range rn.childrenNodes{
 			// 查找到map已经注册了动态节点的情况
 			if strings.Contains(key, ":"){
@@ -179,8 +219,16 @@ func findNode(rn *routerNode,subPaths []string,params *ParamMap) (hi HandlerInte
 						(*params)[key[2:]] = sp[1:]
 					}
 				}
+			} else if strings.Contains(key, "*"){
+				hi,ifFind = node.handlerInterface,true
+				pathParam := ""
+				for _,subPath := range subPaths{
+					pathParam += subPath
+				}
+				(*params)[key[2:]] = pathParam[1:]
 			}
 		}
+	}
 	return
 }
 
@@ -201,9 +249,13 @@ func (rm *routerManager) handle(context *Context) {
 	if ifFind {
 		context.setParam(params)
 		handlerInterface.setContext(context)
-		context.hi = handlerInterface
-		handlerInterface.Prepare()
-		context.handlerfuncs = append(context.handlerfuncs, nil)
+		if restHandler := handlerInterface.getRestHandler(context.Method);restHandler!=nil{
+			context.handlerfuncs = append(context.handlerfuncs, restHandler)
+		} else {
+			context.hi = handlerInterface
+			handlerInterface.Prepare()
+			context.handlerfuncs = append(context.handlerfuncs, nil)
+		}
 	} else {
 		context.handlerfuncs = append(context.handlerfuncs, func(c *Context) {
 			context.WriteString(http.StatusNotFound,"404 Not Found")

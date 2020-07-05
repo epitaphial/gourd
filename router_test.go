@@ -36,14 +36,54 @@ func Test_Router(t *testing.T) {
 	}
 	// 动态路由测试
 	rt.addRouter("/admin/:user", nil)
-	_,ifFind,_ = rt.findRouter("/admin/curled")
-	if ifFind != true {
-		t.Errorf("Expect find /admin.curled but get nothing\n")
+	_,ifFind,params := rt.findRouter("/admin/curled")
+	if ifFind != true || params["user"] != "curled" {
+		t.Errorf("Expect find /admin/curled but get %s\n",params["user"])
+	} else {
+		t.Log(params["user"])
+	}
+	// 动态路由顺序验证
+	rt.addRouter("/admin/curled/:lover", nil)
+	_,ifFind,params = rt.findRouter("/admin/curled/curled1")
+	if ifFind != true || params["lover"] != "curled1"{
+		t.Errorf("Expect find curled1 but get %s\n",params["lover"])
+	} else {
+		t.Log(params["lover"])
+	}
+	// 通配路由测试
+	rt.addRouter("/static/*relapath", nil)
+	_,ifFind,params = rt.findRouter("/static/js/bootstrap.js")
+	if ifFind != true || params["relapath"] != "js/bootstrap.js"{
+		t.Errorf("Expect find /js/bootstrap.js but get %s\n",params["relapath"])
+	} else {
+		t.Log(params["relapath"])
+	}
+	// 通配路由顺序验证
+	rt.addRouter("/static/js/*relapath", nil)
+	_,ifFind,params = rt.findRouter("/static/js/bootstrap.js")
+	if ifFind != true || params["relapath"] != "bootstrap.js"{
+		t.Errorf("Expect find bootstrap.js but get %s\n",params["relapath"])
+	} else {
+		t.Log(params["relapath"])
 	}
 	// 重复添加路由测试
 	err := rt.addRouter("/admin/:sth", nil)
 	if err == nil {
-		t.Errorf("Expect find /admin.curled but get nothing\n")
+		t.Errorf("Expect get duplicate router but get nothing\n")
+	} else {
+		t.Log(err)
+	}
+	// 重复添加路由测试
+	err = rt.addRouter("/static/*file", nil)
+	if err == nil {
+		t.Errorf("Expect get duplicate router but get nothing\n")
+	} else {
+		t.Log(err)
+	}
+	// 路由格式错误测试
+	err = rt.addRouter("/admin/curl*ed", nil)
+	if err == nil {
+		t.Errorf("Expect get format error but get nothing\n")
 	} else {
 		t.Log(err)
 	}
