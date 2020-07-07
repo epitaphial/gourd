@@ -21,10 +21,11 @@ type routerNode struct {
 // 路由组，包含一个根节点
 type routerManager struct {
 	rootNode *routerNode
+	engine   *gourdEngine
 }
 
 // 返回一个RouterGroup的组
-func newRouterManager() *routerManager {
+func newRouterManager(engine *gourdEngine) *routerManager {
 	return &routerManager{
 		rootNode: &routerNode{
 			subPath:          "",
@@ -34,6 +35,7 @@ func newRouterManager() *routerManager {
 			ifEndPath:        false,
 			handlerInterface: nil,
 		},
+		engine: engine,
 	}
 }
 
