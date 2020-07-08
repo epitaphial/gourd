@@ -22,7 +22,7 @@ func Gourd() *gourdEngine {
 	engine.rm = newRouterManager(engine)
 	engine.routerGroup = &routerGroup{engine: engine}
 	engine.groups = []*routerGroup{engine.routerGroup}
-	engine.smgr = StartSession("gourd_session", 3600)
+	engine.smgr = StartSession("gourd_session111", 20)
 	// 默认使用recovery中间件
 	engine.Use(Recovery())
 	return engine

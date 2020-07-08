@@ -1,12 +1,10 @@
 package gourd
 
 import (
-	"crypto/md5"
-	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"html/template"
-	"math/rand"
 	"net/http"
 	"sync"
 	"time"
@@ -26,6 +24,7 @@ type Context struct {
 	handlerfuncs []HandlerFunc // 中间件函数
 	hi           HandlerInterface
 	engine       *gourdEngine
+	sessID       string
 }
 
 // 初始化上下文的操作，包括请求响应、方法
@@ -38,6 +37,7 @@ func NewContext(w http.ResponseWriter, r *http.Request) *Context {
 		Path:   r.URL.Path,
 		data:   make(map[string]interface{}),
 		index:  -1,
+		sessID: "",
 	}
 }
 
@@ -78,6 +78,8 @@ func (context *Context) write(str []byte) {
 func (context *Context) WriteString(code int, formart string, param ...interface{}) {
 	context.SetHeader("Content-Type", "text/plain")
 	context.WriteHeader(code)
+	context.mutex.Lock()
+	defer context.mutex.Unlock()
 	fmt.Fprintf(context.writer, formart, param...)
 }
 
@@ -90,10 +92,7 @@ func (context *Context) Query(key string) string {
 func (context *Context) Redirect(code int, path string) {
 	context.mutex.Lock()
 	defer context.mutex.Unlock()
-	headMap := context.writer.Header()
-	if len(headMap) == 0 {
-		http.Redirect(context.writer, context.req, path, code)
-	}
+	http.Redirect(context.writer, context.req, path, code)
 }
 
 // 用于返回json信息
@@ -115,7 +114,8 @@ func (context *Context) AddData(key string, dataIt interface{}) {
 }
 
 // 渲染模板
-func (context *Context) RenderHTML(htmlPath string) {
+func (context *Context) RenderHTML(code int, htmlPath string) {
+	context.WriteHeader(code)
 	t := template.Must(template.ParseFiles(htmlPath))
 	t.Execute(context.writer, context.data)
 }
@@ -154,25 +154,56 @@ func (context *Context) Next() {
 }
 
 func (context *Context) SetSession(sessionName string, sessionValue interface{}) {
-	// 随机字符串生成
-	rand.Seed(time.Now().UnixNano())
-	randInt := rand.Intn(999999)
-	hash := md5.New()
-	hash.Write([]byte(string(randInt)))
-	sessionId := hex.EncodeToString(hash.Sum(nil))
-	cookie := http.Cookie{
-		Name:     "gourdSession",
-		Value:    sessionId,
-		Path:     "/",
-		MaxAge:   context.engine.smgr.maxLifeTime,
-		HttpOnly: true,
+	// 判断cookie是否已经存在
+	sessCookie, err := context.req.Cookie(context.engine.smgr.cookieName)
+	if err != nil {
+		if context.sessID != "" {
+			context.engine.smgr.setSession(context.sessID, sessionName, sessionValue)
+		} else {
+			sessId := getRandomString()
+			cookie := http.Cookie{
+				Name:     context.engine.smgr.cookieName,
+				Value:    sessId,
+				Path:     "/",
+				MaxAge:   context.engine.smgr.maxLifeTime,
+				HttpOnly: true,
+			}
+			context.SetHeader("Set-Cookie", cookie.String())
+			// 客户端cookie注册
+			context.engine.smgr.setSession(cookie.Value, sessionName, sessionValue)
+			context.sessID = sessId
+		}
+	} else {
+		// 客户端cookie注册
+		context.engine.smgr.setSession(sessCookie.Value, sessionName, sessionValue)
 	}
-	context.SetHeader("Set-Cookie", cookie.String())
-	// 客户端cookie注册
-	context.engine.smgr.setSession(sessionId, sessionName, sessionValue)
 }
 
-func (context *Context) GetSession(sessionName string) (sessionValue interface{}) {
-	return nil
-	//getSessionBy(sessionId string)
+func (context *Context) GetSession(sessionName string) (sessionValue interface{}, err error) {
+	if sessCookie, err1 := context.req.Cookie(context.engine.smgr.cookieName); err1 == nil {
+		sessionValue, err = context.engine.smgr.getSessionValueBy(sessCookie.Value, sessionName)
+	} else {
+		err = errors.New("Can not find session in context.")
+	}
+	return
+}
+
+func (context *Context) DestroySession() (err error) {
+	if sessCookie, err1 := context.req.Cookie(context.engine.smgr.cookieName); err1 != nil {
+		err = errors.New("Can not find session in context.")
+	} else {
+		if err2 := context.engine.smgr.removeSessionValueBy(sessCookie.Value); err2 != nil {
+			err = err2
+		} else {
+			cookie := http.Cookie{
+				Name:    context.engine.smgr.cookieName,
+				MaxAge:  -1,
+				Expires: time.Now().Add(-100 * time.Hour), // Set expires for older versions of IE
+				Path:    "/",
+			}
+			context.SetHeader("Set-Cookie", cookie.String())
+			err = nil
+		}
+	}
+	return
 }
