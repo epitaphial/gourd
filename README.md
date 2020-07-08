@@ -12,7 +12,7 @@ GOURD是一款轻量、简单、易用的golang web框架。
 假设用户已经安装好golang环境，安装方法如下：
 
 ```bash
-$ go get -u github.com/epitaphial/gourd
+go get -u github.com/epitaphial/gourd
 ```
 
 在go源文件中使用：
@@ -32,15 +32,15 @@ import (
     "github.com/epitaphial/gourd"
 )
 type indexHandler struct {
-	gourd.Handler
+    gourd.Handler
 }
 
 func (idx *indexHandler) Get() {
-	idx.Ctx.WriteString(200, "hello,gourd!")
+    idx.Ctx.WriteString(200, "hello,gourd!")
 }
 func main() {
-	engine := gourd.Gourd()
-	engine.Route("/", &indexHandler{})
+    engine := gourd.Gourd()
+    engine.Route("/", &indexHandler{})
     engine.Run(":8080")
 }
 ```
@@ -48,10 +48,10 @@ func main() {
 打开控制台，运行：
 
 ```bash
-$ go run main.go
+go run main.go
 ```
 
-访问http://127.0.0.1:8080/，即可看到文字：
+访问<http://127.0.0.1:8080/>，即可看到文字：
 
 "hello,gourd!"
 
@@ -69,7 +69,7 @@ import (
 )
 
 func main() {
-	engine := gourd.Gourd()
+    engine := gourd.Gourd()
     engine.Run(":8080")
 }
 ```
@@ -87,15 +87,15 @@ import (
     "github.com/epitaphial/gourd"
 )
 type indexHandler struct {
-	gourd.Handler
+    gourd.Handler
 }
 
 func (idx *indexHandler) Get() {
-	idx.Ctx.WriteString(200, "hello,gourd!")
+    idx.Ctx.WriteString(200, "hello,gourd!")
 }
 func main() {
-	engine := gourd.Gourd()
-	engine.Route("/", &indexHandler{})
+    engine := gourd.Gourd()
+    engine.Route("/", &indexHandler{})
     engine.Run(":8080")
 }
 ```
@@ -129,7 +129,7 @@ gourd支持两种类型的动态路径路由。带\*的路由匹配0个或多个
 
 动态路径中的参数通过上下文\*gourd.Context的成员Param查询，例如：
 
-```
+```go
 context.Param["relapath"]
 ```
 
@@ -188,7 +188,7 @@ func (context *Context) Query(key string) string
 
 ```go
 // 给渲染的模板添加数据
-func (context *Context) AddData(key string, dataIt interface{}) 
+func (context *Context) AddData(key string, dataIt interface{})
 // 渲染模板
 func (context *Context) RenderHTML(code int, htmlPath string)
 ```
@@ -199,13 +199,13 @@ func (context *Context) RenderHTML(code int, htmlPath string)
 
 ```go
 engine.Use(func(context *gourd.Context) {
-		// 开始计时
-		t := time.Now()
-		// 先处理后面的中间件以及上下文
-		context.Next()
-		// 最后再计算时间
-		log.Printf("path %s in %v", context.Path, time.Since(t))
-	})
+    // 开始计时
+    t := time.Now()
+    // 先处理后面的中间件以及上下文
+    context.Next()
+    // 最后再计算时间
+    log.Printf("path %s in %v", context.Path, time.Since(t))
+})
 ```
 
 通过Next方法，我们可以先处理后面的中间件，待后面的中间件执行完成后，再回到该中间件进行后续处理。中间件的顺序类似于队列，先进先出，先注册先调用。
@@ -232,4 +232,3 @@ func (context *Context) GetSession(sessionName string) (sessionValue interface{}
 // 清除session
 func (context *Context) DestroySession() (err error)
 ```
-
